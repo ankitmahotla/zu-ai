@@ -12,7 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@ankitmahotla/zu-ai_common": "^1.0.0",
+    "@ankitmahotla/zu-ai_common": "^1.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",

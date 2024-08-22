@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Post } from "../models/post";
 import { CreateBlogInput, UpdateBlogInput } from "@ankitmahotla/zu-ai_common";
+import mongoose from "mongoose";
 
 async function getBlogs(req: Request, res: Response) {
     try {
@@ -13,6 +14,10 @@ async function getBlogs(req: Request, res: Response) {
 
 async function getBlog(req: Request, res: Response) {
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: 'Invalid ID format' });
+        }
+
         const post = await Post.findById(req.params.id);
         if (!post) {
             return res.status(404).json({ message: 'Blog Post not found' });
