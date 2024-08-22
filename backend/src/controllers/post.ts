@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Post } from "../models/post";
+import { CreateBlogInput, UpdateBlogInput } from "@ankitmahotla/zu-ai_common";
 
 async function getBlogs(req: Request, res: Response) {
     try {
@@ -24,6 +25,10 @@ async function getBlog(req: Request, res: Response) {
 
 async function createPost(req: Request, res: Response) {
     try {
+        const { success } = CreateBlogInput.safeParse(req.body)
+        if (!success) {
+            return res.status(401).json({ message: "Invalid/missing inputs" })
+        }
         const newPost = new Post(req.body);
         const savedPost = await newPost.save();
         res.status(201).json(savedPost);
@@ -34,6 +39,10 @@ async function createPost(req: Request, res: Response) {
 
 async function updatePost(req: Request, res: Response) {
     try {
+        const { success } = UpdateBlogInput.safeParse(req.body)
+        if (!success) {
+            return res.status(401).json({ message: "Invalid/missing inputs" })
+        }
         const updatedPost = await Post.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!updatedPost) {
             return res.status(404).json({ message: 'Post not found' });
