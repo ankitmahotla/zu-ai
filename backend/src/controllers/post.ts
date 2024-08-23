@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { Post } from "../models/post";
-import { CreateBlogInput, UpdateBlogInput } from "@ankitmahotla/zu-ai_common";
 import mongoose from "mongoose";
+import { CreatePostInput, UpdatePostInput } from "@ankitmahotla/zu-ai_common";
 
-async function getBlogs(req: Request, res: Response) {
+export async function getBlogs(req: Request, res: Response) {
     try {
         const posts = await Post.find();
         res.json(posts);
@@ -12,7 +12,7 @@ async function getBlogs(req: Request, res: Response) {
     }
 }
 
-async function getBlog(req: Request, res: Response) {
+export async function getBlog(req: Request, res: Response) {
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ message: 'Invalid ID format' });
@@ -28,37 +28,42 @@ async function getBlog(req: Request, res: Response) {
     }
 }
 
-async function createPost(req: Request, res: Response) {
+export async function createPost(req: Request, res: Response) {
     try {
-        const { success } = CreateBlogInput.safeParse(req.body)
-        if (!success) {
-            return res.status(401).json({ message: "Invalid/missing inputs" })
+        const result = CreatePostInput.safeParse(req.body);
+        if (!result.success) {
+            return res.status(400).json({ message: "Invalid input", errors: result.error.errors });
         }
-        const newPost = new Post(req.body);
+
+        const newPost = new Post({
+            ...result.data,
+            author: req.user?._id
+        });
         const savedPost = await newPost.save();
         res.status(201).json(savedPost);
     } catch (error) {
-        res.status(400).json({ message: 'Error creating Blog', error });
+        res.status(500).json({ message: 'Error creating Blog', error });
     }
 }
 
-async function updatePost(req: Request, res: Response) {
+export async function updatePost(req: Request, res: Response) {
     try {
-        const { success } = UpdateBlogInput.safeParse(req.body)
-        if (!success) {
-            return res.status(401).json({ message: "Invalid/missing inputs" })
+        const result = UpdatePostInput.safeParse(req.body);
+        if (!result.success) {
+            return res.status(400).json({ message: "Invalid input", errors: result.error.errors });
         }
-        const updatedPost = await Post.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+        const updatedPost = await Post.findByIdAndUpdate(req.params.id, result.data, { new: true });
         if (!updatedPost) {
             return res.status(404).json({ message: 'Post not found' });
         }
         res.json(updatedPost);
     } catch (error) {
-        res.status(400).json({ message: 'Error updating post', error });
+        res.status(500).json({ message: 'Error updating post', error });
     }
 }
 
-async function deletePost(req: Request, res: Response) {
+export async function deletePost(req: Request, res: Response) {
     try {
         const deletedPost = await Post.findByIdAndDelete(req.params.id);
         if (!deletedPost) {
@@ -69,5 +74,3 @@ async function deletePost(req: Request, res: Response) {
         res.status(500).json({ message: 'Error deleting post', error });
     }
 }
-
-export { getBlog, getBlogs, createPost, updatePost, deletePost }
