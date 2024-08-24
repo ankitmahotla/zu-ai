@@ -7,7 +7,7 @@ import { SkeletonBlogCard } from "@/components/skeleton/SkeletonBlogCard";
 
 function Home() {
     const [blogs, setBlogs] = useState<BlogType[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
 
     async function getBlogs() {
         try {

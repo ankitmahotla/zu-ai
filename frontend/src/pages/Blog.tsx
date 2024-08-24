@@ -1,9 +1,8 @@
 import { CommentBox } from "@/components/app/CommentBox";
 import { FullBlogPost } from "@/components/app/FullBlogPost";
-import { Skeleton } from "@/components/ui/skeleton";
 import useAuthStore from "@/store/useAuthStore";
 import { api } from "@/api";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Loader2, Trash } from "lucide-react";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import useBlogAndComments from "@/hooks/useBlogsAndComments";
@@ -57,7 +56,7 @@ function Blog() {
   };
 
   if (isLoading) {
-    return <Skeleton className="w-full h-[400px]" />;
+    return <Loader2 className="mx-auto animate-spin" />
   }
 
   if (!blog) {
