@@ -5,7 +5,9 @@ import { CreatePostInput, UpdatePostInput } from "@ankitmahotla/zu-ai_common";
 
 export async function getBlogs(req: Request, res: Response) {
   try {
-    const posts = await Post.find();
+    const posts = await Post.find()
+      .sort({ createdAt: -1 }) // Sort by creation date, newest first
+      .limit(10); // Limit to 10 posts
     res.json(posts);
   } catch (error) {
     res.status(500).json({ message: "Error fetching blogs", error });
