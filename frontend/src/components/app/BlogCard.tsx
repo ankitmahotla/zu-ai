@@ -1,19 +1,16 @@
+import { BlogType } from "@/types"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
+import { format, parseISO } from 'date-fns'
 
-interface BlogCardProps {
-  title: string;
-  content: string;
-  publishDate: string;
-  readTime: string;
-}
+export function BlogCard({ title, content, createdAt }: BlogType) {
+  const date = parseISO(createdAt.toString())
 
-export function BlogCard({ title, content, publishDate, readTime }: BlogCardProps) {
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <div className="text-sm text-muted-foreground">
-          Published {publishDate} • {readTime} read
+          Published {format(date, 'MMMM d, yyyy')}
         </div>
       </CardHeader>
       <CardContent>
