@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,19 +17,51 @@ import { api } from "@/api";
 import { RegisterUserInput } from "@ankitmahotla/zu-ai_common";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { useDebounceCallback } from "usehooks-ts";
 
 function Signup() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [username, setUsername] = useState("");
+  const debounced = useDebounceCallback(setUsername, 500);
 
   const form = useForm<z.infer<typeof RegisterUserInput>>({
     resolver: zodResolver(RegisterUserInput),
     defaultValues: {
-      username: "",
+      username,
       email: "",
       password: "",
     },
   });
+
+  useEffect(() => {
+    const checkUsernameUnique = async () => {
+      if (username && username.trim().length > 0) {
+        try {
+          const response = await api.get(
+            `/users/check-username?username=${encodeURIComponent(username)}`,
+          );
+          if (response.status === 200) {
+            toast.success(response.data.message);
+          }
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            if (error.response?.status === 409) {
+              toast.error(error.response.data.message);
+            } else if (error.response?.status === 400) {
+              toast.error("Invalid username. Please try a different one.");
+            } else {
+              toast.error("Error checking username. Please try again.");
+            }
+          } else {
+            toast.error("An unexpected error occurred. Please try again.");
+          }
+          console.error("Error checking username:", error);
+        }
+      }
+    };
+    checkUsernameUnique();
+  }, [username]);
 
   async function onSubmit(values: z.infer<typeof RegisterUserInput>) {
     setIsLoading(true);
@@ -39,7 +71,7 @@ function Signup() {
       navigate("/login");
     } catch (error) {
       let errorMessage = "Failed to create account. Please try again.";
-  
+
       if (error instanceof AxiosError && error.response?.data) {
         const { message } = error.response.data;
         if (message.includes("username is taken")) {
@@ -50,7 +82,7 @@ function Signup() {
           errorMessage = message || errorMessage;
         }
       }
-  
+
       toast.error(errorMessage);
       console.error("Registration failed:", error);
     } finally {
@@ -71,7 +103,14 @@ function Signup() {
                 <FormItem>
                   <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your email" {...field} />
+                    <Input
+                      placeholder="Enter username"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        debounced(e.target.value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
