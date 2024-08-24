@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/api";
 import useAuthStore from "@/store/useAuthStore";
 import { LoginUserInput } from "@ankitmahotla/zu-ai_common";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 function Login() {
   const navigate = useNavigate();
@@ -36,8 +38,23 @@ function Login() {
       const response = await api.post("/users/login", values);
       const { user, accessToken, refreshToken } = response.data;
       login(user, accessToken, refreshToken);
+      toast.success("Login successful!");
       navigate("/");
     } catch (error) {
+      let errorMessage = "Login failed. Please try again.";
+  
+      if (error instanceof AxiosError && error.response?.data) {
+        const { message } = error.response.data;
+        if (message.includes("invalid credentials")) {
+          errorMessage = "Invalid username or password. Please try again.";
+        } else if (message.includes("account not found")) {
+          errorMessage = "Account not found. Please check your credentials or register.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      }
+  
+      toast.error(errorMessage);
       console.error("Login failed:", error);
     } finally {
       setIsLoading(false);

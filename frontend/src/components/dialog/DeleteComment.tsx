@@ -9,6 +9,8 @@ import {
 import { Button } from "../ui/button";
 import { api } from "@/api";
 import { useState } from "react";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 function DeleteComment({
   id,
@@ -20,15 +22,29 @@ function DeleteComment({
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleConfirm() {
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
-      const response = await api.delete(`comments/${id}`);
-      console.log(response.data);
+      await api.delete(`comments/${id}`);
+      toast.success("Comment deleted successfully");
+      refetchComments();
     } catch (error) {
-      console.log(error);
+      let errorMessage = "Failed to delete comment. Please try again.";
+  
+      if (error instanceof AxiosError && error.response?.data) {
+        const { message } = error.response.data;
+        if (message.includes("not found")) {
+          errorMessage = "Comment not found. It may have already been deleted.";
+        } else if (message.includes("not authorized")) {
+          errorMessage = "You are not authorized to delete this comment.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      }
+  
+      toast.error(errorMessage);
+      console.error("Error deleting comment:", error);
     } finally {
       setIsDeleting(false);
-      refetchComments();
     }
   }
 

@@ -5,9 +5,11 @@ import Layout from "./components/app/Layout";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NewPost from "./pages/NewPost";
+import { Toaster } from "sonner";
 
 function App() {
   return (
+    <>
     <Router>
       <Routes>
         <Route element={<Layout />}>
@@ -19,6 +21,8 @@ function App() {
         <Route path="/register" element={<Signup />} />
       </Routes>
     </Router>
+    <Toaster />
+    </>
   );
 }
 

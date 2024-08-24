@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import {
+  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -22,6 +22,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { api } from "@/api";
 import { useState } from "react";
+import { AxiosError } from "axios";
+import { toast } from "sonner";
 export function UpdateComment({
   id,
   content,
@@ -40,15 +42,31 @@ export function UpdateComment({
   });
 
   async function onSubmit(values: z.infer<typeof UpdateCommentInput>) {
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      const response = await api.put(`comments/${id}`, values);
-      console.log(response.data);
+      await api.put(`comments/${id}`, values);
+      toast.success("Comment updated successfully");
+      refetchComments();
     } catch (error) {
-      console.log(error);
+      let errorMessage = "Failed to update comment. Please try again.";
+  
+      if (error instanceof AxiosError && error.response?.data) {
+        const { message } = error.response.data;
+        if (message.includes("not found")) {
+          errorMessage = "Comment not found. It may have been deleted.";
+        } else if (message.includes("not authorized")) {
+          errorMessage = "You are not authorized to update this comment.";
+        } else if (message.includes("content too short")) {
+          errorMessage = "Comment content is too short. Please add more details.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      }
+  
+      toast.error(errorMessage);
+      console.error("Error updating comment:", error);
     } finally {
       setIsSaving(false);
-      refetchComments();
     }
   }
 
@@ -76,11 +94,11 @@ export function UpdateComment({
               </FormItem>
             )}
           />
-          <DialogFooter>
+          <DialogClose asChild>
             <Button type="submit" disabled={isSaving}>
               {isSaving ? "Saving" : "Save"}
             </Button>
-          </DialogFooter>
+          </DialogClose>
         </form>
       </Form>
     </DialogContent>

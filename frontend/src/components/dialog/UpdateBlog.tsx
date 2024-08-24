@@ -22,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "../ui/textarea";
 import { api } from "@/api";
 import { useState } from "react";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
 export function UpdateBlog({
   id,
   title,
@@ -33,7 +35,7 @@ export function UpdateBlog({
   title: string;
   content: string;
   setUpdateBlogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  refetchBlog?: () => Promise<void>;
+  refetchBlog: () => Promise<void>;
 }) {
   const [isSaving, setIsSaving] = useState(false);
   const form = useForm<z.infer<typeof UpdatePostInput>>({
@@ -45,20 +47,34 @@ export function UpdateBlog({
   });
 
   async function onSubmit(values: z.infer<typeof UpdatePostInput>) {
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      const response = await api.put(`posts/${id}`, values);
-      console.log(response.data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsSaving(false);
-      form.reset();
+      await api.put(`posts/${id}`, values);
+      toast.success("Post updated successfully");
       setUpdateBlogOpen(false);
       refetchBlog();
+    } catch (error) {
+      let errorMessage = "Failed to update post. Please try again.";
+  
+      if (error instanceof AxiosError && error.response?.data) {
+        const { message } = error.response.data;
+        if (message.includes("not found")) {
+          errorMessage = "Post not found. It may have been deleted.";
+        } else if (message.includes("not authorized")) {
+          errorMessage = "You are not authorized to update this post.";
+        } else if (message.includes("title already exists")) {
+          errorMessage = "A post with this title already exists. Please choose a different title.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      }
+  
+      toast.error(errorMessage);
+      console.error("Error updating post:", error);
+    } finally {
+      setIsSaving(false);
     }
   }
-
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>

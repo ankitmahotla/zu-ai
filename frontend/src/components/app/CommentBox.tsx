@@ -15,6 +15,7 @@ import { z } from "zod"
 import { CreateCommentInput } from "@ankitmahotla/zu-ai_common"
 import useAuthStore from '@/store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface CommentBoxProps {
     postId: string;
@@ -33,14 +34,17 @@ export function CommentBox({ postId, handleCommentSubmit }: CommentBoxProps) {
     })
 
     function onSubmit(values: z.infer<typeof CreateCommentInput>) {
-        if (isAuthenticated) {
-            console.log("CommentBox onSubmit called with:", values);
-            handleCommentSubmit(values.content)
-            form.reset() // Reset the form after submission
+        if (!isAuthenticated) {
+            toast.error("Please log in to post a comment");
+            navigate("/login");
+            return;
         }
         else {
-            navigate("/login")
+            console.log("CommentBox onSubmit called with:", values);
+            handleCommentSubmit(values.content)
+            form.reset()
         }
+
     }
 
     return (

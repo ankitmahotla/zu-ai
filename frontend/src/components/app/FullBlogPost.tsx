@@ -10,7 +10,7 @@ import { useState } from "react";
 import DeleteBlog from "../dialog/DeleteBlog";
 
 interface FullBlogPostType extends BlogType {
-  refetchBlog?: () => Promise<void>;
+  refetchBlog: () => Promise<void>;
 }
 
 export function FullBlogPost({

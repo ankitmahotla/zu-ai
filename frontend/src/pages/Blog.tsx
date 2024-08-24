@@ -4,13 +4,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import useAuthStore from "@/store/useAuthStore";
 import { api } from "@/api";
 import { Edit, Trash } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import useBlogAndComments from "@/hooks/useBlogsAndComments";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { UpdateComment } from "@/components/dialog/UpdateComment";
 import DeleteComment from "@/components/dialog/DeleteComment";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 function Blog() {
   const location = useLocation();
@@ -33,9 +35,24 @@ function Blog() {
   const handleCommentSubmit = async (content: string) => {
     try {
       await api.post("/comments", { postId, content });
+      toast.success("Comment posted successfully");
       refetchComments();
     } catch (error) {
-      console.error("Error submitting comment:", error);
+      let errorMessage = "Failed to post comment. Please try again.";
+
+      if (error instanceof AxiosError && error.response?.data) {
+        const { message } = error.response.data;
+        if (message.includes("content too short")) {
+          errorMessage = "Comment is too short. Please add more details.";
+        } else if (message.includes("not authorized")) {
+          errorMessage = "You are not authorized to post comments.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      }
+
+      toast.error(errorMessage);
+      console.error("Error posting comment:", error);
     }
   };
 

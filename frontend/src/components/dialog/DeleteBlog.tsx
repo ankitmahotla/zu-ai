@@ -10,18 +10,35 @@ import { Button } from "../ui/button";
 import { api } from "@/api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 function DeleteBlog({ id }: { id: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
+
   async function handleConfirm() {
+    setIsDeleting(true);
     try {
-      setIsDeleting(true);
-      const response = await api.delete(`posts/${id}`);
+      await api.delete(`posts/${id}`);
+      toast.success("Post deleted successfully");
       navigate("/");
-      console.log(response.data);
     } catch (error) {
-      console.log(error);
+      let errorMessage = "Failed to delete post. Please try again.";
+
+      if (error instanceof AxiosError && error.response?.data) {
+        const { message } = error.response.data;
+        if (message.includes("not found")) {
+          errorMessage = "Post not found. It may have already been deleted.";
+        } else if (message.includes("not authorized")) {
+          errorMessage = "You are not authorized to delete this post.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      }
+
+      toast.error(errorMessage);
+      console.error("Error deleting post:", error);
     } finally {
       setIsDeleting(false);
     }

@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AxiosError } from "axios";
+import { toast } from "sonner";
 
 export default function NewPost() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,12 +34,24 @@ export default function NewPost() {
   });
 
   async function onSubmit(values: z.infer<typeof CreatePostInput>) {
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
       const response = await api.post("posts", values);
-      console.log(response.data);
-      navigate(`/blog/${response.data._id}`); // Redirect to the new post
+      toast.success("Post created successfully!");
+      navigate(`/blog/${response.data._id}`);
     } catch (error) {
+      let errorMessage = "Failed to create post. Please try again.";
+
+      if (error instanceof AxiosError && error.response?.data) {
+        const { message } = error.response.data;
+        if (message.includes("content too short")) {
+          errorMessage = "Post content is too short. Please add more details.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      }
+
+      toast.error(errorMessage);
       console.error("Error creating post:", error);
     } finally {
       setIsSubmitting(false);

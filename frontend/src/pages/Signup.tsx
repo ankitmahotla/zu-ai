@@ -15,6 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { api } from "@/api";
 import { RegisterUserInput } from "@ankitmahotla/zu-ai_common";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 function Signup() {
   const navigate = useNavigate();
@@ -33,9 +35,23 @@ function Signup() {
     setIsLoading(true);
     try {
       const response = await api.post("/users/register", values);
-      console.log(response.data);
+      toast.success(response.data.message || "Account created. Please log in.");
       navigate("/login");
     } catch (error) {
+      let errorMessage = "Failed to create account. Please try again.";
+  
+      if (error instanceof AxiosError && error.response?.data) {
+        const { message } = error.response.data;
+        if (message.includes("username is taken")) {
+          errorMessage = "Username already taken. Please choose another.";
+        } else if (message.includes("email is taken")) {
+          errorMessage = "Email already registered. Use another or log in.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      }
+  
+      toast.error(errorMessage);
       console.error("Registration failed:", error);
     } finally {
       setIsLoading(false);
